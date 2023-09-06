@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const Bull = require('bull');
 const dbClient = require('../utils/db');
 const redisClient = require('../utils/redis');
 
@@ -13,6 +14,10 @@ class UsersController {
 
     const hashedPwd = crypto.createHash('sha1').update(password).digest('hex');
     const newUser = await dbClient.nbUsers(email, hashedPwd);
+
+    const fileQueue = new Bull('fileQueue');
+    await fileQueue.add({ userId: newUser.id });
+
     return res.status(201).send({ id: newUser.id, email: newUser.email });
   }
 
